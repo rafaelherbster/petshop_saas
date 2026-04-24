@@ -45,18 +45,30 @@ class TenantMiddleware:
 
         # 🔹 Normalização do path (corrigido)
         path = request.path.strip('/')
-        parts = [p for p in path.split('/') if p]  # remove strings vazias
+
+        # Se for raiz ("/"), deixa passar
+        if not path:
+            response = self.get_response(request)
+            return response
+
+        parts = path.split('/')
 
         public_prefixes = ['login', 'register', 'logout', 'admin', 'publico']
 
-        # 🔹 Validação de slug apenas quando faz sentido
-        if parts:
-            first_part = parts[0]
+        # Rotas públicas passam direto
+        if parts[0] in public_prefixes:
+            response = self.get_response(request)
+            return response
 
-            if first_part not in public_prefixes:
-                if pet_shop:
-                    if first_part != pet_shop.slug:
-                        raise PermissionDenied("Slug inválido para este usuário")
+        # Se usuário não tem tenant, não bloqueia aqui
+        if not pet_shop:
+            response = self.get_response(request)
+            return response
+
+        slug = parts[0]
+
+        if slug != pet_shop.slug:
+            raise PermissionDenied("Slug inválido para este usuário")
 
         try:
             response = self.get_response(request)
