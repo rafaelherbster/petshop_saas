@@ -2,7 +2,7 @@ from .base import *
 
 DEBUG = False
 
-ALLOWED_HOSTS = ['seu-dominio.com']
+ALLOWED_HOSTS = ['petshop-saas.onrender.com']
 
 SECURE_SSL_REDIRECT = True
 
