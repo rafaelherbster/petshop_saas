@@ -10,7 +10,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-fallback-key-change-in-production')
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'https://petshop-saas.onrender.com').split(',')
+
+CSRF_TRUSTED_ORIGINS = ['https://*.onrender.com']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -79,7 +81,7 @@ else:
     # Desenvolvimento local (SQLite)
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.postgresql',
+            'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
