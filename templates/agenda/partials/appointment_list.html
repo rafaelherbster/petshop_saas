@@ -1,0 +1,23 @@
+{% for apt in appointments %}
+<a href="{% url 'appointment_detail' slug=pet_shop.slug pk=apt.pk %}" class="block bg-white p-4 rounded-xl border border-gray-200 hover:border-blue-300 transition">
+    <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3 min-w-0">
+            <div class="bg-blue-50 px-3 py-2 rounded-lg text-center shrink-0">
+                <p class="text-sm font-bold text-blue-700">{{ apt.time|time:"H:i" }}</p>
+            </div>
+            <div class="min-w-0">
+                <p class="font-medium truncate">{{ apt.pet.name }} — {{ apt.service.name }}</p>
+                <p class="text-sm text-gray-500 truncate">{{ apt.pet.tutor.name }}</p>
+            </div>
+        </div>
+        <span class="px-3 py-1 rounded-full text-xs font-medium shrink-0 ml-2 {{ apt.status_color }}">
+            {{ apt.get_status_display }}
+        </span>
+    </div>
+</a>
+{% empty %}
+<div class="bg-white p-8 rounded-xl border border-gray-200 text-center">
+    <p class="text-gray-400">Nenhum agendamento para esta data</p>
+    <a href="{% url 'appointment_create' slug=pet_shop.slug %}" class="inline-block mt-3 text-blue-600 font-medium text-sm">Criar agendamento →</a>
+</div>
+{% endfor %}

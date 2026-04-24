@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}Excluir Tutor{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-md px-4 md:px-0 pt-8">
+    <div class="bg-white p-6 rounded-xl border border-gray-200">
+        <h1 class="text-xl font-bold text-red-600">Excluir Tutor</h1>
+        <p class="mt-2 text-gray-600">Tem certeza que deseja excluir <strong>{{ tutor.name }}</strong>? Esta ação não pode ser desfeita.</p>
+        <form method="post" class="mt-6 flex gap-3">
+            {% csrf_token %}
+            <button type="submit" class="flex-1 bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 active:scale-95">Excluir</button>
+            <a href="{% url 'tutor_detail' slug=pet_shop.slug pk=tutor.pk %}" class="flex-1 text-center bg-gray-100 py-3 rounded-lg font-medium hover:bg-gray-200 active:scale-95">Cancelar</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

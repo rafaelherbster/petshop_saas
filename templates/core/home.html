@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}PetShop Pro - Gestão completa para seu pet shop{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="relative overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
+        <div class="text-center">
+            <div class="text-5xl mb-6">🐾</div>
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+                PetShop Pro
+            </h1>
+            <p class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+                Sistema completo para gestão do seu pet shop. Cadastre clientes, agende serviços, controle financeiro e muito mais.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="{% url 'register' %}" class="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg">
+                    Começar Gratuitamente
+                </a>
+                <a href="{% url 'login' %}" class="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-50 transition shadow border border-gray-200">
+                    Já tenho conta
+                </a>
+            </div>
+            <p class="mt-4 text-sm text-gray-500">Sem cartão de crédito • Gratuito para testar</p>
+        </div>
+    </div>
+</div>
+
+<!-- Features -->
+<div class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-3xl font-bold text-center text-gray-900 mb-12">Tudo que você precisa</h2>
+        <div class="grid md:grid-cols-3 gap-8">
+            <!-- Cadastro -->
+            <div class="text-center p-6">
+                <div class="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                    <span class="text-2xl">👥</span>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">Cadastro de Clientes</h3>
+                <p class="text-gray-600">Gerencie tutores e pets com histórico completo</p>
+            </div>
+            <!-- Agenda -->
+            <div class="text-center p-6">
+                <div class="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                    <span class="text-2xl">📅</span>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">Agenda Inteligente</h3>
+                <p class="text-gray-600">Agende banho, tosa e outros serviços com facilidade</p>
+            </div>
+            <!-- Financeiro -->
+            <div class="text-center p-6">
+                <div class="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                    <span class="text-2xl">💰</span>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">Controle Financeiro</h3>
+                <p class="text-gray-600">Acompanhe receitas e despesas do seu negócio</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CTA Final -->
+<div class="py-16 bg-gray-900 text-white">
+    <div class="max-w-4xl mx-auto px-4 text-center">
+        <h2 class="text-3xl font-bold mb-4">Pronto para começar?</h2>
+        <p class="text-gray-300 mb-8">Crie sua conta agora mesmo e comece a usar gratuitamente</p>
+        <a href="{% url 'register' %}" class="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
+            Criar Conta Grátis
+        </a>
+    </div>
+</div>
+{% endblock %}

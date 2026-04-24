@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendar - {{ pet_shop.name }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen">
+    <!-- Header -->
+    <div class="bg-white border-b border-gray-200">
+        <div class="mx-auto max-w-lg px-4 py-4 text-center">
+            <h1 class="text-xl font-bold text-blue-600">{{ pet_shop.name }}</h1>
+            <p class="text-sm text-gray-500 mt-1">Agende seu horário online</p>
+        </div>
+    </div>
+
+    {% if messages %}
+    <div class="mx-auto max-w-lg px-4 mt-4">
+        {% for message in messages %}
+        <div class="px-4 py-3 rounded-lg {% if message.tags == 'error' %}bg-red-100 text-red-800{% elif message.tags == 'success' %}bg-green-100 text-green-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post" class="mx-auto max-w-lg px-4 py-6 space-y-6">
+        {% csrf_token %}
+
+        <!-- Owner info -->
+        <fieldset class="bg-white p-4 rounded-xl border border-gray-200 space-y-4">
+            <legend class="text-sm font-semibold text-gray-700 px-1">Seus Dados</legend>
+            <div>
+                <label class="block text-sm font-medium mb-1">Seu Nome *</label>
+                <input type="text" name="owner_name" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500" placeholder="Seu nome completo">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1">Telefone / WhatsApp *</label>
+                <input type="tel" name="phone" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500" placeholder="(00) 00000-0000">
+            </div>
+        </fieldset>
+
+        <!-- Pet info -->
+        <fieldset class="bg-white p-4 rounded-xl border border-gray-200 space-y-4">
+            <legend class="text-sm font-semibold text-gray-700 px-1">Dados do Pet</legend>
+            <div>
+                <label class="block text-sm font-medium mb-1">Nome do Pet *</label>
+                <input type="text" name="pet_name" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500" placeholder="Nome do seu pet">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Espécie</label>
+                    <select name="species" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500">
+                        <option value="dog">Cachorro</option>
+                        <option value="cat">Gato</option>
+                        <option value="bird">Pássaro</option>
+                        <option value="rabbit">Coelho</option>
+                        <option value="hamster">Hamster</option>
+                        <option value="fish">Peixe</option>
+                        <option value="reptile">Réptil</option>
+                        <option value="other">Outro</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Raça</label>
+                    <input type="text" name="breed" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500" placeholder="Ex: Labrador">
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- Service -->
+        {% if services %}
+        <fieldset class="bg-white p-4 rounded-xl border border-gray-200 space-y-4">
+            <legend class="text-sm font-semibold text-gray-700 px-1">Serviço</legend>
+            <div>
+                <label class="block text-sm font-medium mb-1">Serviço *</label>
+                <select name="service" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500">
+                    <option value="">Escolha o serviço</option>
+                    {% for s in services %}
+                    <option value="{{ s.pk }}">{{ s.name }} — R$ {{ s.price }} ({{ s.duration_minutes }}min)</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Data *</label>
+                    <input type="date" name="date" value="{{ default_date|date:'Y-m-d' }}" min="{{ default_date|date:'Y-m-d' }}" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Horário *</label>
+                    <select name="time" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500">
+                        <option value="">Escolha</option>
+                        <option value="08:00">08:00</option>
+                        <option value="08:30">08:30</option>
+                        <option value="09:00">09:00</option>
+                        <option value="09:30">09:30</option>
+                        <option value="10:00">10:00</option>
+                        <option value="10:30">10:30</option>
+                        <option value="11:00">11:00</option>
+                        <option value="11:30">11:30</option>
+                        <option value="13:00">13:00</option>
+                        <option value="13:30">13:30</option>
+                        <option value="14:00">14:00</option>
+                        <option value="14:30">14:30</option>
+                        <option value="15:00">15:00</option>
+                        <option value="15:30">15:30</option>
+                        <option value="16:00">16:00</option>
+                        <option value="16:30">16:30</option>
+                        <option value="17:00">17:00</option>
+                        <option value="17:30">17:30</option>
+                    </select>
+                </div>
+            </div>
+        </fieldset>
+        {% else %}
+        <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-6 text-center">
+            <p class="text-yellow-800 font-medium">Nenhum serviço disponível</p>
+            <p class="text-sm text-yellow-600 mt-1">A petshop ainda não cadastrou serviços</p>
+        </div>
+        {% endif %}
+
+        {% if services %}
+        <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-xl font-semibold text-lg hover:bg-blue-700 active:scale-95 transition">
+            Agendar Agora
+        </button>
+        {% endif %}
+
+        <p class="text-center text-xs text-gray-400">
+            {{ pet_shop.name }} • {{ pet_shop.phone }}
+        </p>
+    </form>
+</body>
+</html>

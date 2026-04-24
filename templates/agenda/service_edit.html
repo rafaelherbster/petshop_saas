@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar {{ service.name }}{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-2xl px-4 md:px-0 pt-4 md:pt-6">
+    <h1 class="text-2xl font-bold mb-6">Editar {{ service.name }}</h1>
+    <form method="post" class="bg-white p-6 rounded-xl border border-gray-200 space-y-4">
+        {% csrf_token %}
+        <div><label class="block text-sm font-medium mb-1">Nome *</label><input type="text" name="name" value="{{ service.name }}" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500"></div>
+        <div class="grid grid-cols-2 gap-4">
+            <div><label class="block text-sm font-medium mb-1">Preço (R$) *</label><input type="number" name="price" step="0.01" min="0" value="{{ service.price }}" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500"></div>
+            <div><label class="block text-sm font-medium mb-1">Duração (min)</label><input type="number" name="duration_minutes" value="{{ service.duration_minutes }}" min="15" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500"></div>
+        </div>
+        <div><label class="block text-sm font-medium mb-1">Descrição</label><textarea name="description" rows="3" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500">{{ service.description }}</textarea></div>
+        <div class="flex items-center gap-3">
+            <input type="checkbox" name="is_active" id="is_active" {% if service.is_active %}checked{% endif %} class="w-4 h-4 text-blue-600 rounded">
+            <label for="is_active" class="text-sm font-medium">Serviço ativo</label>
+        </div>
+        <div class="flex gap-3 pt-2">
+            <button type="submit" class="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 active:scale-95">Salvar</button>
+            <a href="{% url 'service_list' slug=pet_shop.slug %}" class="flex-1 text-center bg-gray-100 py-3 rounded-lg font-medium hover:bg-gray-200 active:scale-95">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

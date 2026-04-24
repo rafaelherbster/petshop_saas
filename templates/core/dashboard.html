@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - {{ pet_shop.name }}{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-7xl">
+    <!-- Header -->
+    <div class="flex items-center justify-between px-4 md:px-0 pt-4 md:pt-0">
+        <div>
+            <h1 class="text-2xl font-bold">{{ greeting }}</h1>
+            <p class="text-gray-500">{{ pet_shop.name }}</p>
+        </div>
+        <a href="{% url 'appointment_create' slug=pet_shop.slug %}" class="bg-blue-600 text-white px-4 py-2.5 rounded-lg font-medium text-sm hover:bg-blue-700 transition active:scale-95">
+            + Novo Agendamento
+        </a>
+    </div>
+
+    <!-- Stats cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 px-4 md:px-0">
+        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+            <p class="text-sm text-gray-500">Hoje</p>
+            <p class="text-2xl font-bold mt-1">{{ today_count }}</p>
+            <p class="text-xs text-gray-400">{{ pending_count }} pendente{{ pending_count|pluralize }}</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+            <p class="text-sm text-gray-500">Faturamento Mês</p>
+            <p class="text-2xl font-bold mt-1">R$ {{ month_revenue|floatformat:2 }}</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+            <p class="text-sm text-gray-500">Aniversariantes</p>
+            <p class="text-2xl font-bold mt-1">{{ birthday_pets|length }}</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+            <p class="text-sm text-gray-500">Vacinas</p>
+            <p class="text-2xl font-bold mt-1">{{ upcoming_vaccines|length }}</p>
+        </div>
+    </div>
+
+    <!-- Today's appointments -->
+    <div class="mt-8 px-4 md:px-0">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold">Agendamentos de Hoje</h2>
+            <a href="{% url 'appointment_list' slug=pet_shop.slug %}" class="text-sm text-blue-600">Ver agenda →</a>
+        </div>
+        {% if today_appointments %}
+        <div class="space-y-3">
+            {% for apt in today_appointments %}
+            <div class="bg-white p-4 rounded-xl border border-gray-200 flex items-center justify-between">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-lg font-medium">{{ apt.pet.name }}</span>
+                        <span class="text-xs text-gray-400">{{ apt.pet.tutor.name }}</span>
+                    </div>
+                    <p class="text-sm text-gray-500 mt-1">{{ apt.time|time:"H:i" }} — {{ apt.service.name }}</p>
+                </div>
+                <span class="px-3 py-1 rounded-full text-xs font-medium {{ apt.status_color }}">
+                    {{ apt.get_status_display }}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="bg-white p-8 rounded-xl border border-gray-200 text-center">
+            <p class="text-gray-400">Nenhum agendamento para hoje</p>
+            <a href="{% url 'appointment_create' slug=pet_shop.slug %}" class="inline-block mt-3 text-blue-600 font-medium text-sm">Criar agendamento →</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Pending payments -->
+    {% if appointments_needing_payment %}
+    <div class="mt-8 px-4 md:px-0">
+        <div class="bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-center justify-between">
+            <div>
+                <p class="font-medium text-orange-800">Pagamentos pendentes</p>
+                <p class="text-sm text-orange-600">{{ appointments_needing_payment }} atendimento{{ appointments_needing_payment|pluralize }} aguardando pagamento</p>
+            </div>
+            <a href="{% url 'appointment_list' slug=pet_shop.slug %}" class="bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-orange-700 transition active:scale-95">Ver →</a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Alerts -->
+    {% if upcoming_vaccines or birthday_pets %}
+    <div class="mt-8 px-4 md:px-0 pb-4">
+        <h2 class="text-lg font-semibold mb-4">Alertas</h2>
+        <div class="space-y-3">
+            {% if upcoming_vaccines %}
+            {% for vaccine in upcoming_vaccines %}
+            <div class="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                <p class="text-sm">💉 Vacina de <strong>{{ vaccine.pet.name }}</strong> vence em {{ vaccine.next_due|date:"d/m" }}</p>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% if birthday_pets %}
+            {% for bp in birthday_pets %}
+            <div class="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                <p class="text-sm">🎂 <strong>{{ bp.name }}</strong> faz aniversário hoje!</p>
+            </div>
+            {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

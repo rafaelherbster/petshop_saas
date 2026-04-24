@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}Configurações{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-2xl px-4 md:px-0 pt-4">
+    <h1 class="text-2xl font-bold">Configurações do Pet Shop</h1>
+
+    {% if pet_shop.slug %}
+    <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mt-4">
+        <p class="text-sm font-medium text-blue-800">Link de Agendamento Online</p>
+        <p class="text-xs text-blue-600 mt-1">Compartilhe com seus clientes para agendarem sem precisar ligar!</p>
+        <div class="mt-2 bg-white border border-blue-200 rounded-lg p-2 flex items-center justify-between gap-2">
+            <input type="text" readonly value="{{ request.scheme }}://{{ request.get_host }}/publico/agendar/{{ pet_shop.slug }}/" id="share-link" class="text-xs bg-transparent border-none w-full focus:outline-none truncate">
+            <button onclick="navigator.clipboard.writeText(document.getElementById('share-link').value)" class="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs whitespace-nowrap hover:bg-blue-700 active:scale-95">Copiar</button>
+        </div>
+    </div>
+    {% endif %}
+
+    <form method="post" class="bg-white p-6 rounded-xl border border-gray-200 space-y-4 mt-4">
+        {% csrf_token %}
+        <div><label class="block text-sm font-medium mb-1">Nome *</label><input type="text" name="name" value="{{ pet_shop.name|default_if_none:'' }}" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500"></div>
+        <div class="grid grid-cols-2 gap-4">
+            <div><label class="block text-sm font-medium mb-1">Telefone</label><input type="text" name="phone" value="{{ pet_shop.phone|default_if_none:'' }}" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500"></div>
+            <div><label class="block text-sm font-medium mb-1">CNPJ</label><input type="text" name="cnpj" value="{{ pet_shop.cnpj|default_if_none:'' }}" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500"></div>
+        </div>
+        <div><label class="block text-sm font-medium mb-1">Endereço</label><input type="text" name="address" value="{{ pet_shop.address|default_if_none:'' }}" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500"></div>
+        <div><label class="block text-sm font-medium mb-1">Chave PIX</label><input type="text" name="pix_key" value="{{ pet_shop.pix_key|default_if_none:'' }}" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500" placeholder="CPF, CNPJ, email, telefone ou aleatória"></div>
+        <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 active:scale-95">Salvar</button>
+    </form>
+</div>
+{% endblock %}

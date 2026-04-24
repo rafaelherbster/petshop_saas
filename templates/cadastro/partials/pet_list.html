@@ -1,0 +1,17 @@
+{% for pet in pets %}
+<a href="{% url 'pet_detail' slug=pet_shop.slug pk=pet.pk %}" class="block bg-white p-4 rounded-xl border border-gray-200 hover:border-blue-300 transition">
+    <div class="flex items-center gap-3">
+        <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-xl shrink-0">
+            {% if pet.species == 'dog' %}🐕{% elif pet.species == 'cat' %}🐈{% elif pet.species == 'bird' %}🐦{% else %}🐾{% endif %}
+        </div>
+        <div class="min-w-0">
+            <p class="font-medium">{{ pet.name }}</p>
+            <p class="text-sm text-gray-500">{{ pet.get_species_display }} · {{ pet.breed|default:"SRD" }} · Tutor: {{ pet.tutor.name|truncatechars:25 }}</p>
+        </div>
+    </div>
+</a>
+{% empty %}
+<div class="bg-white p-8 rounded-xl border border-gray-200 text-center">
+    <p class="text-gray-400">Nenhum animal encontrado</p>
+</div>
+{% endfor %}

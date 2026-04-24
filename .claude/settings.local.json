@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(dir:*)",
+      "Bash(netstat -ano)",
+      "Bash(findstr :8000)",
+      "Bash(tasklist)",
+      "Bash(findstr python:*)",
+      "Bash(taskkill:*)",
+      "Bash(curl:*)"
+    ]
+  }
+}

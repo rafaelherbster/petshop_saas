@@ -1,0 +1,179 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}PetShop Pro{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
+    <style>
+        .nav-link { display: flex; flex-direction: column; align-items: center; padding: 0.25rem; font-size: 0.75rem; }
+        .nav-link.active { color: #3b82f6; }
+        .nav-link svg { width: 1.5rem; height: 1.5rem; }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen {% if user.is_authenticated %}pb-16 md:pb-0 md:pl-64 transition-all duration-200{% endif %}" id="body">
+
+    {% if user.is_authenticated %}
+    <!-- Desktop Sidebar -->
+    <aside id="sidebar" class="hidden md:flex md:flex-col md:fixed md:left-0 md:top-0 md:h-screen md:w-64 bg-white border-r border-gray-200 z-50 transition-all duration-200">
+        <div class="flex flex-col h-full">
+            <!-- Header -->
+            <div class="flex items-center h-16 px-3 border-b border-gray-200 shrink-0">
+                <span class="text-xl shrink-0">🐾</span>
+                <span id="sidebar-brand" class="ml-2 text-sm font-bold text-blue-600 whitespace-nowrap overflow-hidden transition-all duration-200">PetShop Pro</span>
+                <button onclick="toggleSidebar()" class="ml-auto text-gray-400 hover:text-gray-600 p-1 shrink-0 transition-transform duration-200" id="sidebar-toggle-btn" title="Minimizar/Expandir">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+            </div>
+            <!-- Shop name -->
+            {% if pet_shop %}
+            <div id="sidebar-shop" class="px-3 py-2 border-b border-gray-100 whitespace-nowrap overflow-hidden transition-all duration-200">
+                <p class="text-xs text-gray-500 truncate">{{ pet_shop.name }}</p>
+            </div>
+            {% endif %}
+            <!-- Nav -->
+            <nav class="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
+                <a href="{{ dashboard_url }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-100 transition whitespace-nowrap overflow-hidden">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                    <span class="ml-3 sidebar-text">Dashboard</span>
+                </a>
+                <a href="{{ tutor_list_url }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-100 transition whitespace-nowrap overflow-hidden">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
+                    <span class="ml-3 sidebar-text">Tutores</span>
+                </a>
+                <a href="{{ pet_list_url }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-100 transition whitespace-nowrap overflow-hidden">
+                    <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0
+                        <!-- Pad -->
+                        <ellipse cx="12" cy="15" rx="4" ry="3.5"/>
+                        <!-- Toes -->
+                        <ellipse cx="6" cy="8.5" rx="1.8" ry="2.2"/>
+                        <ellipse cx="9.5" cy="5.5" rx="1.8" ry="2.2"/>
+                        <ellipse cx="14.5" cy="5.5" rx="1.8" ry="2.2"/>
+                        <ellipse cx="18" cy="8.5" rx="1.8" ry="2.2"/>
+                    </svg>
+                    <span class="ml-3 sidebar-text">Animais</span>
+                </a>
+                <a href="{{ appointment_list_url }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-100 transition whitespace-nowrap overflow-hidden">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.２５v7.５"/></svg>
+                    <span class="ml-3 sidebar-text">Agenda</span>
+                </a>
+                <a href="{{ service_list_url }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-100 transition whitespace-nowrap overflow-hidden">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"/>
+                    </svg>
+                    <span class="ml-3 sidebar-text">Serviços</span>
+                </a>
+                <a href="{{ config_url }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-100 transition whitespace-nowrap overflow-hidden">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10.325 4.317c.426-1.72 2.924-1.72 3.35 0a1.725 1.725 0 002.288 1.184 6.749 6.749 0 013.114 6.986v1.085H8v-1.085a6.749 6.749 0 013.114-6.986z"/>
+                    </svg>
+                    <span class="ml-3 sidebar-text">Configurações</span>
+                </a>
+                <a href="{% url 'logout' %}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-100 transition whitespace-nowrap overflow-hidden">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.２５-２．２５V１５m３ ０l３-３m０ ０l-３-３m３ ３H９"/></svg>
+                    <span class="ml-3 sidebar-text">Sair</span>
+                </a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Mobile bottom nav -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 md:hidden z-50">
+        <div class="flex justify-around items-center h-16">
+            <a href="{{dashboard_url}}" class="nav-link text-gray-500"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg><span>Início</span></a>
+            <a href="{{tutor_list_url}}" class="nav-link text-gray-500"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg><span>Tutores</span></a>
+            <a href="{{appointment_list_url}}" class="nav-link text-gray-500"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.２５ 0 01２１ １１．２５v７．５"/></svg><span>Agenda</span></a>
+            <a href="{{pet_list_url}}" class="nav-link text-gray-500">
+                <svg fill="currentColor" viewBox="0 0 ２４ ２４">
+                    <ellipse cx="１２" cy="１５" rx="４" ry="３．５"/>
+                    <ellipse cx="６" cy="８．５" rx="１．８" ry="２．２"/>
+                    <ellipse cx="９．５" cy="５．５" rx="１．８" ry="２．２"/>
+                    <ellipse cx="１４．５" cy="５．５" rx="１．８" ry="２．２"/>
+                    <ellipse cx="１８" cy="８．５" rx="１．８" ry="２．２"/>
+                </svg>
+                <span>Animais</span>
+            </a>
+        </div>
+    </nav>
+    {% endif %}
+
+    <!-- Main -->
+    <main class="md:p-6">
+        {% if messages %}
+        <div class="mx-auto max-w-7xl px-4">
+            {% for message in messages %}
+            <div class="mt-4 px-4 py-3 rounded-lg {% if message.tags == 'error' %}bg-red-100 text-red-800{% elif message.tags == 'success' %}bg-green-100 text-green-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+
+    {% if user.is_authenticated %}
+    <script>
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const body = document.getElementById('body');
+        const texts = sidebar.querySelectorAll('.sidebar-text');
+        const toggleBtn = document.getElementById('sidebar-toggle-btn');
+        const brand = document.getElementById('sidebar-brand');
+        const shop = document.getElementById('sidebar-shop');
+
+        if (sidebar.dataset.collapsed === 'true') {
+            sidebar.dataset.collapsed = 'false';
+            sidebar.classList.remove('md:w-16');
+            sidebar.classList.add('md:w-64');
+            body.classList.remove('md:pl-16');
+            body.classList.add('md:pl-64');
+            texts.forEach(t => { t.style.opacity = '1'; t.style.display = ''; });
+            if (brand) brand.style.display = '';
+            if (shop) shop.style.display = '';
+            toggleBtn.style.transform = '';
+        } else {
+            sidebar.dataset.collapsed = 'true';
+            sidebar.classList.remove('md:w-64');
+            sidebar.classList.add('md:w-16');
+            body.classList.remove('md:pl-64');
+            body.classList.add('md:pl-16');
+            texts.forEach(t => { t.style.opacity = '0'; t.style.display = 'none'; });
+            if (brand) brand.style.display = 'none';
+            if (shop) shop.style.display = 'none';
+            toggleBtn.style.transform = 'rotate(180deg)';
+        }
+        localStorage.setItem('sidebarCollapsed', sidebar.dataset.collapsed);
+    }
+
+    // Restore state
+    document.addEventListener('DOMContentLoaded', function() {
+        var sidebar = document.getElementById('sidebar');
+        var body = document.getElementById('body');
+        if (localStorage.getItem('sidebarCollapsed') === 'true') {
+            sidebar.dataset.collapsed = 'true';
+            sidebar.classList.remove('md:w-64');
+            sidebar.classList.add('md:w-16');
+            body.classList.remove('md:pl-64');
+            body.classList.add('md:pl-16');
+            sidebar.querySelectorAll('.sidebar-text').forEach(function(t) {
+                t.style.display = 'none';
+            });
+            var brand = document.getElementById('sidebar-brand');
+            var shop = document.getElementById('sidebar-shop');
+            if (brand) brand.style.display = 'none';
+            if (shop) shop.style.display = 'none';
+            var toggleBtn = document.getElementById('sidebar-toggle-btn');
+            if (toggleBtn) toggleBtn.style.transform = 'rotate(180deg)';
+        }
+    });
+    </script>
+    {% endif %}
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

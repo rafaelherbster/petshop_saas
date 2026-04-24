@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ appointment.pet.name }} — {{ appointment.service.name }}{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-2xl px-4 md:px-0 pt-4 md:pt-6 pb-24">
+    <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold">{{ appointment.pet.name }}</h1>
+        <div class="flex gap-2">
+            <a href="{% url 'appointment_edit' slug=pet_shop.slug pk=appointment.pk %}" class="text-sm text-blue-600 px-3 py-2">Editar</a>
+            <a href="{% url 'appointment_delete' slug=pet_shop.slug pk=appointment.pk %}" class="text-sm text-red-600 px-3 py-2">Cancelar</a>
+        </div>
+    </div>
+
+    <!-- Quick status change for appointment -->
+    <div class="mt-4 bg-white p-4 rounded-xl border border-gray-200">
+        <div class="grid grid-cols-2 gap-4 text-sm">
+            <div><p class="text-gray-500">Serviço</p><p class="font-medium">{{ appointment.service.name }} — R$ {{ appointment.service.price }}</p></div>
+            <div><p class="text-gray-500">Data/Hora</p><p class="font-medium">{{ appointment.date|date:"d/m/Y" }} às {{ appointment.time|time:"H:i" }}</p></div>
+            <div>
+                <p class="text-gray-500">Status do Agendamento</p>
+                <form method="post" action="{% url 'appointment_quick_status' slug=pet_shop.slug pk=appointment.pk %}" class="mt-1">
+                    {% csrf_token %}
+                    <select name="status" onchange="this.form.submit()" class="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-blue-500 {{ appointment.status_color }}">
+                        {% for value, label in appointment.STATUS_CHOICES %}
+                        <option value="{{ value }}" {% if appointment.status == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </div>
+            <div><p class="text-gray-500">Tutor</p><p class="font-medium"><a href="{% url 'tutor_detail' slug=pet_shop.slug pk=appointment.pet.tutor.pk %}" class="text-blue-600">{{ appointment.pet.tutor.name }}</a></p></div>
+        </div>
+        {% if appointment.notes %}
+        <div class="pt-3 border-t border-gray-100 mt-4"><p class="text-gray-500 text-sm">Observações</p><p class="mt-1">{{ appointment.notes }}</p></div>
+        {% endif %}
+    </div>
+
+    <!-- Payment section -->
+    {% if appointment.status != 'cancelado' %}
+    <div class="mt-4">
+        {% if appointment.payment %}
+        {% with apt_payment=appointment.payment %}
+        <div class="bg-white p-4 rounded-xl border {% if apt_payment.status == 'paid' %}border-green-200{% elif apt_payment.status == 'pending' %}border-yellow-200{% else %}border-red-200{% endif %}">
+            <div class="flex items-center justify-between mb-2">
+                {% if apt_payment.status == 'paid' %}
+                    <p class="font-medium text-green-800">Pagamento: Pago</p>
+                {% elif apt_payment.status == 'pending' %}
+                    <p class="font-medium text-yellow-800">Pagamento: Pendente</p>
+                {% else %}
+                    <p class="font-medium text-red-800">Pagamento: Reembolsado</p>
+                {% endif %}
+                <a href="{% url 'edit_payment' slug=pet_shop.slug pk=apt_payment.pk %}" class="text-xs text-blue-600">Editar detalhes</a>
+            </div>
+            <p class="text-sm text-gray-600 mb-3">R$ {{ apt_payment.amount }} — {{ apt_payment.get_method_display }}</p>
+            <!-- Quick payment status change -->
+            <form method="post" action="{% url 'payment_quick_status' slug=pet_shop.slug pk=apt_payment.pk %}">
+                {% csrf_token %}
+                <select name="status" onchange="this.form.submit()" class="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-blue-500">
+                    {% for value, label in apt_payment.STATUS_CHOICES %}
+                    <option value="{{ value }}" {% if apt_payment.status == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+        {% endwith %}
+        {% else %}
+        <a href="{% url 'register_payment' slug=pet_shop.slug appointment_id=appointment.pk %}" class="block bg-white p-4 rounded-xl border border-blue-200 hover:border-blue-400 transition">
+            <p class="font-medium text-blue-700">💰 Registrar Pagamento</p>
+            <p class="text-sm text-gray-500">R$ {{ appointment.service.price }}</p>
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

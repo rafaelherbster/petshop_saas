@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar {{ pet.name }}{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-2xl px-4 md:px-0 pt-4 md:pt-6 pb-24">
+    <h1 class="text-2xl font-bold mb-6">Editar {{ pet.name }}</h1>
+    <form method="post" enctype="multipart/form-data" class="bg-white p-6 rounded-xl border border-gray-200 space-y-4">
+        {% csrf_token %}
+        <div><label class="block text-sm font-medium mb-1">Nome *</label><input type="text" name="name" value="{{ pet.name }}" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500"></div>
+        <div class="grid grid-cols-2 gap-4">
+            <div><label class="block text-sm font-medium mb-1">Espécie *</label><select name="species" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500">
+                {% for value, label in pet.SPECIES_CHOICES %}
+                <option value="{{ value }}" {% if pet.species == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select></div>
+            <div><label class="block text-sm font-medium mb-1">Porte</label><select name="size" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500">
+                <option value="">Selecione</option>
+                {% for value, label in pet.SIZE_CHOICES %}
+                <option value="{{ value }}" {% if pet.size == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select></div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+            <div><label class="block text-sm font-medium mb-1">Raça</label><input type="text" name="breed" value="{{ pet.breed }}" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500"></div>
+            <div><label class="block text-sm font-medium mb-1">Sexo *</label>
+                <select name="gender" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500">
+                    <option value="M" {% if pet.gender == "M" %}selected{% endif %}>Macho</option>
+                    <option value="F" {% if pet.gender == "F" %}selected{% endif %}>Fêmea</option>
+                </select>
+            </div>
+        </div>
+        <div><label class="block text-sm font-medium mb-1">Nascimento</label><input type="date" name="birth_date" value="{{ pet.birth_date|date:'Y-m-d' }}" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500"></div>
+        <div><label class="block text-sm font-medium mb-1">Cor</label><input type="text" name="color" value="{{ pet.color }}" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500"></div>
+        <div><label class="block text-sm font-medium mb-1">Tutor</label>
+            <select name="tutor" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500">
+                {% for tutor in tutors %}<option value="{{ tutor.pk }}" {% if tutor.pk == pet.tutor.pk %}selected{% endif %}>{{ tutor.name }}</option>{% endfor %}
+            </select>
+        </div>
+        <div><label class="block text-sm font-medium mb-1">Foto</label><input type="file" name="photo" accept="image/*" class="w-full px-4 py-3 rounded-lg border border-gray-300"></div>
+        <div><label class="block text-sm font-medium mb-1">Observações</label><textarea name="notes" rows="3" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500">{{ pet.notes }}</textarea></div>
+        <div class="flex gap-3 pt-2">
+            <button type="submit" class="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 active:scale-95">Salvar</button>
+            <a href="{% url 'pet_detail' slug=pet_shop.slug pk=pet.pk %}" class="flex-1 text-center bg-gray-100 py-3 rounded-lg font-medium hover:bg-gray-200 active:scale-95">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

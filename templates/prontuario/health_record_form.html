@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if record %}Editar Registro{% else %}Novo Registro{% endif %}{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-2xl px-4 md:px-0 pt-4 md:pt-6">
+    <h1 class="text-2xl font-bold mb-6">{% if record %}Editar{% else %}Novo{% endif %} Registro de Saúde</h1>
+    <form method="post" class="bg-white p-6 rounded-xl border border-gray-200 space-y-4">
+        {% csrf_token %}
+        {% if not record %}
+        <div>
+            <label class="block text-sm font-medium mb-1">Pet *</label>
+            <select name="pet" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500">
+                <option value="">Selecione o pet</option>
+                {% for pet in pets %}
+                <option value="{{ pet.pk }}" {% if selected_pet == pet.pk|stringformat:"s" %}selected{% endif %}>{{ pet.name }} — {{ pet.tutor.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+        <div>
+            <label class="block text-sm font-medium mb-1">Tipo *</label>
+            <select name="type" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500">
+                {% if record %}
+                    {% for value, label in record.TYPE_CHOICES %}
+                    <option value="{{ value }}" {% if record.type == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                {% else %}
+                <option value="vacina">Vacina</option>
+                <option value="vermifugo">Verm\xEDfugo</option>
+                <option value="alergia">Alergia</option>
+                <option value="doenca">Doen\xE7a</option>
+                <option value="cirurgia">Cirurgia</option>
+                <option value="medicamento">Medicamento</option>
+                <option value="outro">Outro</option>
+                {% endif %}
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium mb-1">Data *</label>
+            <input type="date" name="date" value="{% if record %}{{ record.date|date:'Y-m-d' }}{% endif %}" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div>
+            <label class="block text-sm font-medium mb-1">Descrição *</label>
+            <textarea name="description" rows="3" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500">{% if record %}{{ record.description }}{% endif %}</textarea>
+        </div>
+        <div>
+            <label class="block text-sm font-medium mb-1">Próximo Vencimento</label>
+            <input type="date" name="next_due" value="{% if record and record.next_due %}{{ record.next_due|date:'Y-m-d' }}{% endif %}" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div class="flex gap-3 pt-2">
+            <button type="submit" class="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 active:scale-95">Salvar</button>
+            <a href="javascript:history.back()" class="flex-1 text-center bg-gray-100 py-3 rounded-lg font-medium hover:bg-gray-200 active:scale-95">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

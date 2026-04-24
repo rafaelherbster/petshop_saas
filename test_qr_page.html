@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste QR PIX</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; text-align: center; }
+        .qr { margin: 20px auto; width: 300px; height: 300px; }
+        h1 { color: #333; }
+        .info { background: #f0f0f0; padding: 15px; margin: 20px auto; max-width: 500px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Teste do QR Code PIX</h1>
+
+    <div class="info">
+        <strong>TxID:</strong> <span id="txid"></span><br>
+        <strong>Valor:</strong> R$ 50,00<br>
+        <strong>Chave PIX:</strong> 85980449929<br>
+        <strong>PayLoad EMV:</strong><br>
+        <code id="payload" style="font-size: 10px; word-break: break-all;"></code>
+    </div>
+
+    <h2>QR Code para Scannear:</h2>
+    <img id="qr" class="qr" src="" alt="QR PIX">
+
+    <script>
+        // Dados do teste (mesmos usados no backend)
+        const pixKey = '85980449929';
+        const amount = 50.00;
+        const merchantName = 'Golden pet';
+        const txid = 'TEST123456';
+        const city = 'SAO PAULO';
+        const country = 'BR';
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+        // Constrói o EMV PIX (mesma lógica do backend)
+        function tlv(tag, value) {
+            const val = String(value);
+            return tag + String(val.length).padStart(2, '0') + val;
+        }
+
+        const gui = tlv('00', 'br.gov.bcb.pix') + tlv('01', pixKey);
+        const merchantAccount = tlv('26', gui);
+        const additionalData = tlv('62', tlv('05', txid));
+
+        let payload = merchantAccount;
+        payload += tlv('00', '11');
+        payload += tlv('01', '11');
+        payload += tlv('52', '0000');
+        payload += tlv('53', '986');
+        payload += tlv('54', amount.toFixed(2));
+        payload += tlv('58', country);
+        payload += tlv('59', merchantName.substring(0, 25));
+        payload += tlv('60', city.substring(0, 15));
+        payload += additionalData;
+
+        // CRC16
+        function crc16(data) {
+            let crc = 0xFFFF;
+            for (let i = 0; i < data.length; i++) {
+                crc ^= (data.charCodeAt(i) << 8);
+                for (let j = 0; j < 8; j++) {
+                    if (crc & 0x8000) crc = (crc << 1) ^ 0x1021;
+                    else crc = crc << 1;
+                    crc &= 0xFFFF;
+                }
+            }
+            return crc;
+        }
+
+        const crc = crc16(payload);
+        payload += '6304' + crc.toString(16).toUpperCase().padStart(4, '0');
+
+        document.getElementById('txid').textContent = txid;
+        document.getElementById('payload').textContent = payload;
+        document.getElementById('payload').title = payload;
+
+        // Gera QR code
+        new QRCode(document.getElementById('qr'), {
+            text: payload,
+            width: 300,
+            height: 300,
+            colorDark: '#000000',
+            colorLight: '#ffffff'
+        });
+    </script>
+</body>
+</html>

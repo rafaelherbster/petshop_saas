@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar Agendamento{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-2xl px-4 md:px-0 pt-4 md:pt-6 pb-24">
+    <h1 class="text-2xl font-bold mb-6">Editar Agendamento</h1>
+    <form method="post" class="bg-white p-6 rounded-xl border border-gray-200 space-y-4">
+        {% csrf_token %}
+        <div><label class="block text-sm font-medium mb-1">Pet *</label><select name="pet" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500">
+            {% for pet in pets %}<option value="{{ pet.pk }}" {% if pet.pk == appointment.pet.pk %}selected{% endif %}>{{ pet.name }} — {{ pet.tutor.name }}</option>{% endfor %}
+        </select></div>
+        <div><label class="block text-sm font-medium mb-1">Serviço *</label><select name="service" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500">
+            {% for service in services %}<option value="{{ service.pk }}" {% if service.pk == appointment.service.pk %}selected{% endif %}>{{ service.name }} — R$ {{ service.price }}</option>{% endfor %}
+        </select></div>
+        <div class="grid grid-cols-2 gap-4">
+            <div><label class="block text-sm font-medium mb-1">Data *</label><input type="date" name="date" value="{{ appointment.date|date:'Y-m-d' }}" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500"></div>
+            <div><label class="block text-sm font-medium mb-1">Horário *</label><input type="time" name="time" value="{{ appointment.time|time:'H:i' }}" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500"></div>
+        </div>
+        <div>
+            <label class="block text-sm font-medium mb-1">Status</label>
+            <select name="status" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500">
+                {% for value, label in appointment.STATUS_CHOICES %}<option value="{{ value }}" {% if appointment.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+            </select>
+        </div>
+        <div><label class="block text-sm font-medium mb-1">Observações</label><textarea name="notes" rows="3" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500">{{ appointment.notes }}</textarea></div>
+        <div class="flex gap-3 pt-2">
+            <button type="submit" class="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 active:scale-95">Salvar</button>
+            <a href="{% url 'appointment_detail' slug=pet_shop.slug pk=appointment.pk %}" class="flex-1 text-center bg-gray-100 py-3 rounded-lg font-medium hover:bg-gray-200 active:scale-95">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

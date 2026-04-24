@@ -1,0 +1,2 @@
+- [Implementacao Multi-tenant](core_implementation.md) — Arquitetura de isolamento multi-tenant com TenantMiddleware, TenantManager e TenantQuerySet
+- [Problemas Isolamento Tenant](tenant_issues.md) — Problemas detectados nos testes de isolamento

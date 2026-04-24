@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}Excluir Registro{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-md px-4 pt-8">
+    <div class="bg-white p-6 rounded-xl border border-gray-200">
+        <h1 class="text-xl font-bold text-red-600">Excluir Registro</h1>
+        <p class="mt-2 text-gray-600">Tem certeza que deseja excluir o registro de <strong>{{ record.pet.name }}</strong>?</p>
+        <form method="post" class="mt-6 flex gap-3">
+            {% csrf_token %}
+            <button type="submit" class="flex-1 bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 active:scale-95">Excluir</button>
+            <a href="{% url 'pet_detail' slug=pet_shop.slug pk=record.pet.pk %}" class="flex-1 text-center bg-gray-100 py-3 rounded-lg font-medium hover:bg-gray-200 active:scale-95">Cancelar</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendamento Recebido!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen">
+    <div class="mx-auto max-w-lg px-4 py-8">
+        <!-- Success -->
+        <div class="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
+            <div class="text-4xl mb-3">✅</div>
+            <h1 class="text-xl font-bold text-green-800">Agendamento Recebido!</h1>
+            <p class="text-sm text-green-600 mt-2">Recebemos seu pedido de agendamento. Realize o pagamento para confirmar.</p>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl border border-gray-200 mt-4">
+            <p class="text-sm text-gray-500">Salve este link para acompanhar:</p>
+            <p class="text-xs text-blue-600 mt-1 break-all">{{ request.build_absolute_uri }}</p>
+        </div>
+
+        <!-- PIX Payment -->
+        {% if show_pix %}
+        <div class="mt-6 bg-white rounded-xl border border-blue-200 overflow-hidden">
+            <div class="bg-blue-600 text-white px-4 py-3 text-center">
+                <p class="font-semibold">Pagamento via PIX</p>
+                <p class="text-sm text-blue-100">Escaneie o QR code abaixo para pagar</p>
+            </div>
+            <div class="p-6 text-center space-y-3">
+                {% if pix_amount %}
+                <p class="text-2xl font-bold text-gray-900">R$ {{ pix_amount|floatformat:2 }}</p>
+                {% endif %}
+
+                <!-- QR Code (manual优先, senão automático) -->
+                <div class="inline-block bg-white p-3 rounded-lg border border-gray-200">
+                    {% if pix_qr_manual %}
+                        <img src="{{ pix_qr_manual }}" alt="QR Code PIX" class="w-48 h-48">
+                        <p class="text-xs text-green-600 mt-2">✅ QR oficial do banco</p>
+                    {% elif pix_svg %}
+                        <img src="{{ pix_svg }}" alt="QR Code PIX" class="w-48 h-48">
+                    {% endif %}
+                </div>
+
+                <div class="text-left space-y-2 pt-2">
+                    <p class="text-sm text-gray-600"><strong>Chave PIX:</strong> <span class="font-mono text-xs">{{ client_token.pet_shop.pix_key }}</span></p>
+                    <button onclick="navigator.clipboard.writeText('{{ client_token.pet_shop.pix_key }}')" class="w-full bg-blue-600 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 active:scale-95 transition">
+                        Copiar Chave PIX
+                    </button>
+                </div>
+
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                    <p class="text-xs text-yellow-700">💡 Após o pagamento, a petshop irá confirmar automaticamente.</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Appointments -->
+        {% if appointments %}
+        <div class="mt-6">
+            <h2 class="text-lg font-semibold mb-3">Seus Agendamentos</h2>
+            <div class="space-y-3">
+                {% for apt in appointments %}
+                <div class="bg-white p-4 rounded-xl border border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-medium">{{ apt.pet.name }}</p>
+                            <p class="text-sm text-gray-500">{{ apt.service.name }} — {{ apt.date|date:"d/m/Y" }} às {{ apt.time|time:"H:i" }}</p>
+                        </div>
+                        <span class="px-2 py-1 rounded-full text-xs font-medium {{ apt.status_color }}">
+                            {{ apt.get_status_display }}
+                        </span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="mt-6 text-center">
+            <p class="text-sm text-gray-500">Dúvidas? Entre em contato:</p>
+            <a href="tel:{{ client_token.pet_shop.phone }}" class="text-blue-600 font-medium">{{ client_token.pet_shop.phone }}</a>
+        </div>
+    </div>
+</body>
+</html>

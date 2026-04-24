@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ pet.name }}{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-3xl px-4 md:px-0 pt-4 md:pt-6 pb-24">
+    <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold">{{ pet.name }}</h1>
+        <div class="flex gap-2">
+            <a href="{% url 'pet_edit' slug=pet_shop.slug pk=pet.pk %}" class="text-sm text-blue-600 px-3 py-2">Editar</a>
+            <a href="{% url 'pet_delete' slug=pet_shop.slug pk=pet.pk %}" class="text-sm text-red-600 px-3 py-2">Excluir</a>
+        </div>
+    </div>
+
+    <div class="bg-white p-4 rounded-xl border border-gray-200 mt-4">
+        <div class="grid grid-cols-2 gap-4 text-sm">
+            <div><p class="text-gray-500">Espécie</p><p class="font-medium">{{ pet.get_species_display }}</p></div>
+            <div><p class="text-gray-500">Raça</p><p class="font-medium">{{ pet.breed|default:"SRD" }}</p></div>
+            <div><p class="text-gray-500">Porte</p><p class="font-medium">{{ pet.get_size_display|default:"—" }}</p></div>
+            <div><p class="text-gray-500">Sexo</p><p class="font-medium">{{ pet.get_gender_display }}</p></div>
+            {% if pet.birth_date %}
+            <div><p class="text-gray-500">Nascimento</p><p class="font-medium">{{ pet.birth_date|date:"d/m/Y" }}</p></div>
+            {% endif %}
+            {% if pet.color %}
+            <div><p class="text-gray-500">Cor</p><p class="font-medium">{{ pet.color }}</p></div>
+            {% endif %}
+            <div><p class="text-gray-500">Tutor</p><p class="font-medium"><a href="{% url 'tutor_detail' slug=pet_shop.slug pk=pet.tutor.pk %}" class="text-blue-600">{{ pet.tutor.name }}</a></p></div>
+            <div><p class="text-gray-500">Visitas</p><p class="font-medium">{{ pet.visit_count }}</p></div>
+        </div>
+        {% if pet.notes %}
+        <div class="mt-4 pt-4 border-t border-gray-100">
+            <p class="text-gray-500 text-sm">Observações</p>
+            <p class="mt-1">{{ pet.notes }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Health Records -->
+    <div class="mt-6">
+        <div class="flex items-center justify-between">
+            <h2 class="text-lg font-semibold">Prontuário</h2>
+            <a href="{% url 'health_record_create' slug=pet_shop.slug %}?pet={{ pet.pk }}" class="text-sm bg-blue-600 text-white px-3 py-1.5 rounded-lg">+ Novo</a>
+        </div>
+        <div class="mt-3 space-y-2">
+            {% for record in health_records %}
+            <div class="bg-white p-3 rounded-lg border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="text-sm font-medium">{{ record.get_type_display }}</span>
+                        <span class="text-xs text-gray-500 ml-2">{{ record.date|date:"d/m/Y" }}</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <a href="{% url 'health_record_edit' slug=pet_shop.slug pk=record.pk %}" class="text-xs text-blue-600">Editar</a>
+                        <a href="{% url 'health_record_delete' slug=pet_shop.slug pk=record.pk %}" class="text-xs text-red-600">Excluir</a>
+                    </div>
+                </div>
+                <p class="text-sm text-gray-600 mt-1">{{ record.description }}</p>
+                {% if record.next_due %}
+                <p class="text-xs text-yellow-600 mt-1">Próximo: {{ record.next_due|date:"d/m/Y" }}</p>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div class="bg-white p-4 rounded-lg border border-gray-200 text-center">
+                <p class="text-sm text-gray-400">Nenhum registro de saúde</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Loyalty Card -->
+    <div class="mt-6">
+        <h2 class="text-lg font-semibold">Cartão Fidelidade</h2>
+        {% if pet.loyalty_card %}
+            <div class="bg-white p-4 rounded-xl border border-gray-200 mt-3">
+                <div class="flex items-center justify-between">
+                    <p class="text-sm text-gray-500">Visitas: <strong>{{ pet.loyalty_card.visits_count }}/{{ pet.loyalty_card.max_visits }}</strong></p>
+                    {% if pet.loyalty_card.is_complete %}
+                        <a href="{% url 'loyalty_redeem' slug=pet_shop.slug pk=pet.loyalty_card.pk %}" class="bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-green-700 active:scale-95">Resgatar</a>
+                    {% else %}
+                        <span class="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs">{{ pet.loyalty_card.visits_count }}/{{ pet.loyalty_card.max_visits }}</span>
+                    {% endif %}
+                </div>
+                {% if pet.loyalty_card.redeemed_at %}
+                    <p class="text-xs text-gray-400 mt-2">Resgatado em {{ pet.loyalty_card.redeemed_at|date:"d/m/Y" }}</p>
+                {% endif %}
+            </div>
+        {% else %}
+            <a href="{% url 'loyalty_activate' slug=pet_shop.slug pk=pet.pk %}" class="text-sm text-blue-600 mt-1 inline-block">Ativar cartão fidelidade</a>
+        {% endif %}
+    </div>
+
+    <!-- Appointments -->
+    {% if appointments %}
+    <div class="mt-6">
+        <h2 class="text-lg font-semibold">Histórico de Agendamentos</h2>
+        <div class="mt-3 space-y-2">
+            {% for apt in appointments %}
+            <div class="bg-white p-3 rounded-lg border border-gray-200 flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium">{{ apt.service.name }}</p>
+                    <p class="text-xs text-gray-500">{{ apt.date|date:"d/m/Y" }} às {{ apt.time|time:"H:i" }}</p>
+                </div>
+                <span class="px-2 py-1 rounded-full text-xs {{ apt.status_color }}">{{ apt.get_status_display }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
