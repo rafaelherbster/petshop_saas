@@ -10,7 +10,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-fallback-key-change-in-production')
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'https://petshop-saas.onrender.com').split(',')
+ALLOWED_HOSTS = ['petshop-saas.onrender.com']
 
 CSRF_TRUSTED_ORIGINS = ['https://*.onrender.com']
 
