@@ -85,12 +85,16 @@ def login_view(request):
 # REGISTER (CRIA USUÁRIO E PETSHOP)
 # =========================
 def register_view(request):
-    try:
-        if request.user.is_authenticated:
-            profile = UserProfile.objects.filter(user=request.user).first()
-            if profile and profile.pet_shop:
-                return redirect('dashboard', slug=profile.pet_shop.slug)
-            return redirect('config_no_slug')
+    # =========================
+  # REGISTER (CRIA USUÁRIO E PETSHOP)
+  # =========================
+  def register_view(request):
+    # Primeiro verifica se usuário já está logado
+    if request.user.is_authenticated:
+        profile = UserProfile.objects.filter(user=request.user).first()
+        if profile and profile.pet_shop:  # CORRIGIR PARA: if profile and profile.pet_shop:
+            return redirect('dashboard', slug=profile.pet_shop.slug)
+        return redirect('config_no_slug')
 
     error = None
 
@@ -146,9 +150,9 @@ def register_view(request):
                         error = 'Erro ao criar conta. Tente novamente.'
 
     return render(request, 'core/register.html', {'error': error})
-    except Exception as e:
-        logger.error(f"Erro no register_view: {e}", exc_info=True)
-        return render(request, 'core/register.html', {'error': 'Erro interno. Tente novamente.'})
+    # except Exception as e:
+    #     logger.error(f"Erro no register_view: {e}", exc_info=True)
+    #     return render(request, 'core/register.html', {'error': 'Erro interno. Tente novamente.'})
 
 
 # =========================
