@@ -5,6 +5,18 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from core.decorators import tenant_required
 from core.models import PetShop, UserProfile
 from django.utils.text import slugify
+import logging
+import sys
+
+logger = logging.getLogger(__name__)
+
+# Adiciona handler de console para garantir logs em produção
+if not logger.handlers:
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setLevel(logging.ERROR)
+    formatter = logging.Formatter('%(levelname)s %(asctime)s %(module)s: %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
 User = get_user_model()
 
@@ -23,57 +35,62 @@ def home_view(request):
 # LOGIN
 # =========================
 def login_view(request):
-    if request.user.is_authenticated:
-        profile = UserProfile.objects.filter(user=request.user).first()
-        if profile and profile.pet_shop and profile.pet_shop.is_active:
-            return redirect('dashboard', slug=profile.pet_shop.slug)
-        return redirect('config_no_slug')
+    try:
+        if request.user.is_authenticated:
+            profile = UserProfile.objects.filter(user=request.user).first()
+            if profile and profile.pet_shop and profile.pet_shop.is_active:
+                return redirect('dashboard', slug=profile.pet_shop.slug)
+            return redirect('config_no_slug')
 
-    error = None
+        error = None
 
-    if request.method == 'POST':
-        email = request.POST.get('email', '').strip()
-        password = request.POST.get('password', '')
+        if request.method == 'POST':
+            email = request.POST.get('email', '').strip()
+            password = request.POST.get('password', '')
 
-        if not email or not password:
-            error = 'Preencha email e senha'
-        else:
-            try:
-                from django.core.validators import validate_email
-                from django.core.exceptions import ValidationError
-                validate_email(email)
-            except ValidationError:
-                error = 'Email inválido'
+            if not email or not password:
+                error = 'Preencha email e senha'
+            else:
+                try:
+                    from django.core.validators import validate_email
+                    from django.core.exceptions import ValidationError
+                    validate_email(email)
+                except ValidationError:
+                    error = 'Email inválido'
 
-            if not error:
-                user = authenticate(request, username=email, password=password)
-                if user:
-                    login(request, user)
-                    profile = UserProfile.objects.filter(user=user).first()
-                    if not profile or not profile.pet_shop or not profile.pet_shop.is_active:
-                        logout(request)
-                        error = 'Petshop inválido ou inativo'
+                if not error:
+                    user = authenticate(request, username=email, password=password)
+                    if user:
+                        login(request, user)
+                        profile = UserProfile.objects.filter(user=user).first()
+                        if not profile or not profile.pet_shop or not profile.pet_shop.is_active:
+                            logout(request)
+                            error = 'Petshop inválido ou inativo'
+                        else:
+                            slug = profile.pet_shop.slug
+                            next_url = request.GET.get('next')
+                            if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
+                                return redirect(next_url)
+                            return redirect('dashboard', slug=slug)
                     else:
-                        slug = profile.pet_shop.slug
-                        next_url = request.GET.get('next')
-                        if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
-                            return redirect(next_url)
-                        return redirect('dashboard', slug=slug)
-                else:
-                    error = 'Credenciais inválidas'
+                        error = 'Credenciais inválidas'
 
-    return render(request, 'core/login.html', {'error': error})
+        return render(request, 'core/login.html', {'error': error})
+    except Exception as e:
+        logger.error(f"Erro no login_view: {e}", exc_info=True)
+        return render(request, 'core/login.html', {'error': 'Erro interno. Tente novamente.'})
 
 
 # =========================
 # REGISTER (CRIA USUÁRIO E PETSHOP)
 # =========================
 def register_view(request):
-    if request.user.is_authenticated:
-        profile = UserProfile.objects.filter(user=request.user).first()
-        if profile and profile.pet_shop:
-            return redirect('dashboard', slug=profile.pet_shop.slug)
-        return redirect('config_no_slug')
+    try:
+        if request.user.is_authenticated:
+            profile = UserProfile.objects.filter(user=request.user).first()
+            if profile and profile.pet_shop:
+                return redirect('dashboard', slug=profile.pet_shop.slug)
+            return redirect('config_no_slug')
 
     error = None
 
@@ -129,6 +146,9 @@ def register_view(request):
                         error = 'Erro ao criar conta. Tente novamente.'
 
     return render(request, 'core/register.html', {'error': error})
+    except Exception as e:
+        logger.error(f"Erro no register_view: {e}", exc_info=True)
+        return render(request, 'core/register.html', {'error': 'Erro interno. Tente novamente.'})
 
 
 # =========================
