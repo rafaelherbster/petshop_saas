@@ -64,40 +64,67 @@ def login_view(request):
 
 
 # =========================
-# REGISTER (SEM CRIAR PETSHOP)
+# REGISTER (CRIA USUÁRIO E PETSHOP)
 # =========================
 def register_view(request):
-
     if request.user.is_authenticated:
         profile = UserProfile.objects.filter(user=request.user).first()
-
         if profile and profile.pet_shop:
             return redirect('dashboard', slug=profile.pet_shop.slug)
-
         return redirect('config_no_slug')
 
     error = None
 
     if request.method == 'POST':
-        email = request.POST.get('email')
-        password = request.POST.get('password')
+        email = request.POST.get('email', '').strip()
+        password = request.POST.get('password', '')
+        confirm_password = request.POST.get('confirm_password', '')
+        shop_name = request.POST.get('shop_name', '').strip()
+        shop_phone = request.POST.get('shop_phone', '').strip()
 
-        if not email or not password:
-            error = 'Preencha todos os campos'
+        if not email or not password or not shop_name:
+            error = 'Preencha todos os campos obrigatórios'
         else:
-            if User.objects.filter(username=email).exists():
-                error = 'Usuário já existe'
-            else:
-                user = User.objects.create_user(
-                    username=email,
-                    email=email,
-                    password=password
-                )
-                # OBS: O signal post_save já cria o UserProfile automaticamente
+            from django.core.validators import validate_email
+            from django.core.exceptions import ValidationError
+            try:
+                validate_email(email)
+            except ValidationError:
+                error = 'Email inválido'
 
-                login(request, user)
-
-                return redirect('config_no_slug')
+            if not error:
+                if password != confirm_password:
+                    error = 'As senhas não conferem'
+                elif len(password) < 6:
+                    error = 'A senha deve ter pelo menos 6 caracteres'
+                elif User.objects.filter(email=email).exists():
+                    error = 'Email já cadastrado'
+                else:
+                    try:
+                        user = User.objects.create_user(
+                            username=email.split('@')[0],
+                            email=email,
+                            password=password
+                        )
+                        slug = slugify(shop_name)
+                        if PetShop.objects.filter(slug=slug).exists():
+                            slug = f"{slug}-{user.id}"
+                        shop = PetShop.objects.create(
+                            name=shop_name,
+                            slug=slug,
+                            phone=shop_phone or '',
+                            is_active=True
+                        )
+                        profile = user.profile
+                        profile.pet_shop = shop
+                        profile.role = 'owner'
+                        profile.save()
+                        login(request, user)
+                        return redirect('dashboard', slug=shop.slug)
+                    except Exception as e:
+                        import logging
+                        logging.error(f"Erro ao criar conta: {e}")
+                        error = 'Erro ao criar conta. Tente novamente.'
 
     return render(request, 'core/register.html', {'error': error})
 
