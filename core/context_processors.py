@@ -1,28 +1,49 @@
 from django.urls import reverse
-from core.models import UserProfile
-from core.views import get_user_profile
 import logging
 
 logger = logging.getLogger(__name__)
 
 
 def tenant_context(request):
+    """Context processor que fornece informações do tenant para os templates.
+
+    Este roda em TODAS as páginas, então precisa ser muito robusto.
+    """
     pet_shop = None
 
     try:
-        pet_shop = getattr(request, 'pet_shop', None)
+        # ✅ Verificar se usuário está autenticado
+        if not request.user.is_authenticated:
+            # Usuário não logado = sem tenant
+            return {
+                'pet_shop': None,
+                'dashboard_url': reverse('home'),
+                'tutor_list_url': reverse('login'),
+                'appointment_list_url': reverse('login'),
+                'pet_list_url': reverse('login'),
+                'service_list_url': reverse('login'),
+                'config_url': reverse('login'),
+            }
 
-        if not pet_shop and request.user.is_authenticated:
-            profile = get_user_profile(request.user)
+        # ✅ Usuário logado - tentar obter profile de forma segura
+        try:
+            from core.models import UserProfile
+            profile = UserProfile.objects.select_related('pet_shop').filter(
+                user=request.user
+            ).first()
 
-            if profile and profile.pet_shop and profile.pet_shop.slug:
+            if profile and profile.pet_shop and profile.pet_shop.is_active:
                 pet_shop = profile.pet_shop
+        except Exception as e:
+            # Se falhar (banco vazio, etc), retorna contexto vazio
+            logger.debug(f"Context processor: erro ao obter profile: {e}")
+            pass
+
     except Exception as e:
-        logger.error(f"Erro ao obter contexto de tenant: {e}", exc_info=True)
-        pet_shop = None
+        logger.debug(f"Context processor: erro geral: {e}")
+        pass
 
-    urls = {}
-
+    # ✅ Se não tem pet_shop, redirecionar para config ou login
     if pet_shop:
         slug = pet_shop.slug
 
@@ -38,15 +59,19 @@ def tenant_context(request):
             'config_url': u('config'),
         }
     else:
-        fallback = reverse('config_no_slug')
+        # Usuário logado mas sem pet_shop = vai para config
+        try:
+            config_url = reverse('config_no_slug')
+        except:
+            config_url = '/config/'
 
         urls = {
-            'dashboard_url': fallback,
-            'tutor_list_url': fallback,
-            'appointment_list_url': fallback,
-            'pet_list_url': fallback,
-            'service_list_url': fallback,
-            'config_url': fallback,
+            'dashboard_url': config_url,
+            'tutor_list_url': config_url,
+            'appointment_list_url': config_url,
+            'pet_list_url': config_url,
+            'service_list_url': config_url,
+            'config_url': config_url,
         }
 
     return {

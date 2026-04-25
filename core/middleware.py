@@ -1,6 +1,9 @@
 from threading import local
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import OperationalError
+import logging
+
+logger = logging.getLogger(__name__)
 
 _thread_locals = local()
 
@@ -15,15 +18,25 @@ class TenantMiddleware:
         try:
             if request.user.is_authenticated:
                 try:
-                    profile = request.user.profile
+                    # ✅ Usar select_related para evitar queries extras
+                    # e garantir que o profile esteja carregado
+                    from core.models import UserProfile
+                    try:
+                        profile = UserProfile.objects.select_related('pet_shop').get(user=request.user)
+                    except UserProfile.DoesNotExist:
+                        profile = None
+
                     if profile and profile.pet_shop_id:
                         pet_shop = profile.pet_shop
 
                         if not (pet_shop and pet_shop.is_active):
                             pet_shop = None
-                except (ObjectDoesNotExist, AttributeError, OperationalError):
+                except (ObjectDoesNotExist, AttributeError, OperationalError) as e:
+                    # Log apenas em modo debug para não poluir logs em produção
+                    logger.debug(f"Erro ao obter tenant: {e}")
                     pet_shop = None
-        except Exception:
+        except Exception as e:
+            logger.debug(f"Erro geral no middleware: {e}")
             pet_shop = None
 
         request.pet_shop = pet_shop
