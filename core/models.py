@@ -1,8 +1,13 @@
 # -*- coding: utf-8 -*-
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import PermissionDenied
-from django.db import models
+from django.db import models, transaction
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from core.middleware import get_current_pet_shop
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class TenantQuerySet(models.QuerySet):
@@ -41,7 +46,6 @@ class TenantQuerySet(models.QuerySet):
             return super().get(*args, **kwargs)
         return super().get(pet_shop=self._get_tenant(), *args, **kwargs)
 
-    # 🔥 ESSENCIAL — CORRIGE SEU BUG
     def count(self):
         qs = self._apply_tenant_filter()
         return super(TenantQuerySet, qs).count()
@@ -133,11 +137,6 @@ class User(AbstractUser):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
 
-    def save(self, *args, **kwargs):
-        if not self.username:
-            self.username = self.email.split('@')[0]
-        super().save(*args, **kwargs)
-
     def __str__(self):
         return self.email
 
@@ -168,7 +167,8 @@ class PetShop(models.Model):
             base = slugify(self.name) or str(self.pk)
             slug = base
             counter = 1
-            while PetShop.objects.filter(slug=slug).exists():
+            # Evita slug duplicado
+            while PetShop.objects.exclude(pk=self.pk).filter(slug=slug).exists():
                 slug = f'{base}-{counter}'
                 counter += 1
             self.slug = slug
@@ -182,11 +182,25 @@ class UserProfile(models.Model):
     ]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    pet_shop = models.ForeignKey(PetShop, on_delete=models.CASCADE, related_name='users', null=True)
+    pet_shop = models.ForeignKey(PetShop, on_delete=models.CASCADE, related_name='users', null=True, blank=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='owner')
 
     def __str__(self):
         return f'{self.user.email} - {self.role}'
+
+
+# =========================
+# SIGNALS
+# =========================
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    """Criar UserProfile automaticamente quando User é criado"""
+    if created:
+        try:
+            with transaction.atomic():
+                UserProfile.objects.create(user=instance)
+        except Exception as e:
+            logger.error(f"Erro ao criar UserProfile para {instance.email}: {e}", exc_info=True)
 
 class BusinessHours(TenantModel):
     WEEKDAYS = [

@@ -2,9 +2,20 @@ from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
+from django.db import transaction
+from django.db.models import Sum
+from django.utils import timezone
+from django.contrib import messages
 from core.decorators import tenant_required
 from core.models import PetShop, UserProfile
+from agenda.models import Appointment
+from financeiro.models import Payment
+from prontuario.models import HealthRecord
+from cadastro.models import Pet
 from django.utils.text import slugify
+from datetime import date, datetime
 import logging
 import sys
 
@@ -20,12 +31,35 @@ if not logger.handlers:
 
 User = get_user_model()
 
+
+# =========================
+# HELPER FUNCTIONS
+# =========================
+def get_user_profile(user):
+    """Obter o perfil do usuário de forma reutilizável"""
+    return UserProfile.objects.filter(user=user).first()
+
+
+def get_greeting_message(hour=None):
+    """Retorna mensagem de saudação baseada na hora"""
+    if hour is None:
+        now_time = timezone.localtime(timezone.now())
+        hour = now_time.hour
+    
+    if hour < 12:
+        return 'Bom dia!'
+    elif hour < 18:
+        return 'Boa tarde!'
+    else:
+        return 'Boa noite!'
+
+
 # =========================
 # HOME / LANDING PAGE
 # =========================
 def home_view(request):
     if request.user.is_authenticated:
-        profile = UserProfile.objects.filter(user=request.user).first()
+        profile = get_user_profile(request.user)
         if profile and profile.pet_shop and profile.pet_shop.is_active:
             return redirect('dashboard', slug=profile.pet_shop.slug)
         return redirect('config_no_slug')
@@ -37,7 +71,7 @@ def home_view(request):
 def login_view(request):
     try:
         if request.user.is_authenticated:
-            profile = UserProfile.objects.filter(user=request.user).first()
+            profile = get_user_profile(request.user)
             if profile and profile.pet_shop and profile.pet_shop.is_active:
                 return redirect('dashboard', slug=profile.pet_shop.slug)
             return redirect('config_no_slug')
@@ -52,8 +86,6 @@ def login_view(request):
                 error = 'Preencha email e senha'
             else:
                 try:
-                    from django.core.validators import validate_email
-                    from django.core.exceptions import ValidationError
                     validate_email(email)
                 except ValidationError:
                     error = 'Email inválido'
@@ -62,7 +94,7 @@ def login_view(request):
                     user = authenticate(request, username=email, password=password)
                     if user:
                         login(request, user)
-                        profile = UserProfile.objects.filter(user=user).first()
+                        profile = get_user_profile(user)
                         if not profile or not profile.pet_shop or not profile.pet_shop.is_active:
                             logout(request)
                             error = 'Petshop inválido ou inativo'
@@ -84,15 +116,12 @@ def login_view(request):
 # =========================
 # REGISTER (CRIA USUÁRIO E PETSHOP)
 # =========================
+@transaction.atomic()
 def register_view(request):
-    # =========================
-  # REGISTER (CRIA USUÁRIO E PETSHOP)
-  # =========================
-  def register_view(request):
     # Primeiro verifica se usuário já está logado
     if request.user.is_authenticated:
-        profile = UserProfile.objects.filter(user=request.user).first()
-        if profile and profile.pet_shop:  # CORRIGIR PARA: if profile and profile.pet_shop:
+        profile = get_user_profile(request.user)
+        if profile and profile.pet_shop and profile.pet_shop.is_active:
             return redirect('dashboard', slug=profile.pet_shop.slug)
         return redirect('config_no_slug')
 
@@ -108,8 +137,6 @@ def register_view(request):
         if not email or not password or not shop_name:
             error = 'Preencha todos os campos obrigatórios'
         else:
-            from django.core.validators import validate_email
-            from django.core.exceptions import ValidationError
             try:
                 validate_email(email)
             except ValidationError:
@@ -125,7 +152,7 @@ def register_view(request):
                 else:
                     try:
                         user = User.objects.create_user(
-                            username=email.split('@')[0],
+                            username=email,
                             email=email,
                             password=password
                         )
@@ -143,56 +170,63 @@ def register_view(request):
                         profile.role = 'owner'
                         profile.save()
                         login(request, user)
+                        messages.success(request, f'Conta criada com sucesso! Bem-vindo ao {shop.name}')
                         return redirect('dashboard', slug=shop.slug)
                     except Exception as e:
-                        import logging
-                        logging.error(f"Erro ao criar conta: {e}")
+                        logger.error(f"Erro ao criar conta: {e}", exc_info=True)
                         error = 'Erro ao criar conta. Tente novamente.'
 
     return render(request, 'core/register.html', {'error': error})
-    # except Exception as e:
-    #     logger.error(f"Erro no register_view: {e}", exc_info=True)
-    #     return render(request, 'core/register.html', {'error': 'Erro interno. Tente novamente.'})
 
 
 # =========================
 # CONFIG SEM SLUG (ONBOARDING)
 # =========================
 @login_required
+@transaction.atomic()
 def config_view_no_slug(request):
-    profile = UserProfile.objects.filter(user=request.user).first()
+    profile = get_user_profile(request.user)
 
     if profile and profile.pet_shop:
         return redirect('config', slug=profile.pet_shop.slug)
 
+    error = None
+
     if request.method == 'POST':
-        name = request.POST.get('name')
+        name = request.POST.get('name', '').strip()
+        phone = request.POST.get('phone', '').strip()
 
-        slug = slugify(name)
+        if not name:
+            error = 'Nome do petshop é obrigatório'
+        else:
+            try:
+                slug = slugify(name)
 
-        # evita slug duplicado
-        if PetShop.objects.filter(slug=slug).exists():
-            return render(request, 'core/config.html', {
-                'error': 'Nome do petshop já está em uso'
-            })
+                # Se slug duplicado, adiciona user.id como no register_view
+                if PetShop.objects.filter(slug=slug).exists():
+                    slug = f"{slug}-{request.user.id}"
 
-        shop = PetShop.objects.create(
-            name=name,
-            slug=slug,
-            phone=request.POST.get('phone'),
-            address=request.POST.get('address', ''),
-            cnpj=request.POST.get('cnpj', ''),
-            pix_key=request.POST.get('pix_key', '') or None,
-            is_active=True
-        )
+                shop = PetShop.objects.create(
+                    name=name,
+                    slug=slug,
+                    phone=phone or '',
+                    address=request.POST.get('address', ''),
+                    cnpj=request.POST.get('cnpj', ''),
+                    pix_key=request.POST.get('pix_key', '') or None,
+                    is_active=True
+                )
 
-        profile.pet_shop = shop
-        profile.role = 'owner'
-        profile.save()
+                profile.pet_shop = shop
+                profile.role = 'owner'
+                profile.save()
 
-        return redirect('dashboard', slug=shop.slug)
+                messages.success(request, f'Pet Shop {shop.name} criado com sucesso!')
+                return redirect('dashboard', slug=shop.slug)
+            except Exception as e:
+                logger.error(f"Erro ao criar petshop: {e}", exc_info=True)
+                error = 'Erro ao criar petshop. Tente novamente.'
 
-    return render(request, 'core/config.html')
+    return render(request, 'core/config.html', {'error': error})
 
 
 # =========================
@@ -218,18 +252,29 @@ def logout_view(request):
 @login_required
 def config_view(request, slug):
     pet_shop = request.pet_shop
+    error = None
 
     if request.method == 'POST':
-        pet_shop.name = request.POST.get('name')
-        pet_shop.phone = request.POST.get('phone')
-        pet_shop.address = request.POST.get('address', '')
-        pet_shop.cnpj = request.POST.get('cnpj', '')
-        pet_shop.pix_key = request.POST.get('pix_key', '') or None
-        pet_shop.save()
+        name = request.POST.get('name', '').strip()
+        
+        if not name:
+            error = 'Nome do petshop é obrigatório'
+        else:
+            try:
+                pet_shop.name = name
+                pet_shop.phone = request.POST.get('phone', '').strip()
+                pet_shop.address = request.POST.get('address', '')
+                pet_shop.cnpj = request.POST.get('cnpj', '')
+                pet_shop.pix_key = request.POST.get('pix_key', '') or None
+                pet_shop.save()
 
-        return redirect('dashboard', slug=pet_shop.slug)
+                messages.success(request, 'Configurações atualizadas com sucesso!')
+                return redirect('dashboard', slug=pet_shop.slug)
+            except Exception as e:
+                logger.error(f"Erro ao atualizar petshop: {e}", exc_info=True)
+                error = 'Erro ao atualizar petshop. Tente novamente.'
 
-    return render(request, 'core/config.html', {'pet_shop': pet_shop})
+    return render(request, 'core/config.html', {'pet_shop': pet_shop, 'error': error})
 
 
 # =========================
@@ -241,18 +286,8 @@ def dashboard_view(request, slug):
     pet_shop = request.pet_shop
 
     if not pet_shop:
-        from django.contrib import messages
         messages.warning(request, 'Complete o cadastro do seu Pet Shop para começar.')
         return redirect('config', slug=slug)
-
-    from agenda.models import Appointment
-    from financeiro.models import Payment
-    from prontuario.models import HealthRecord
-    from cadastro.models import Pet
-
-    from django.db.models import Sum
-    from datetime import date, datetime
-    from django.utils import timezone
 
     today = date.today()
 
@@ -281,15 +316,7 @@ def dashboard_view(request, slug):
         birth_date__day=today.day,
     )
 
-    now_time = timezone.localtime(timezone.now())
-    hour = now_time.hour
-
-    if hour < 12:
-        greeting = 'Bom dia!'
-    elif hour < 18:
-        greeting = 'Boa tarde!'
-    else:
-        greeting = 'Boa noite!'
+    greeting = get_greeting_message()
 
     context = {
         'pet_shop': pet_shop,
