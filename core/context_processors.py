@@ -2,13 +2,18 @@ from django.urls import reverse
 from core.models import UserProfile
 
 def tenant_context(request):
-    pet_shop = getattr(request, 'pet_shop', None)
+    pet_shop = None
 
-    if not pet_shop and request.user.is_authenticated:
-        profile = UserProfile.objects.filter(user=request.user).first()
+    try:
+        pet_shop = getattr(request, 'pet_shop', None)
 
-        if profile and profile.pet_shop and profile.pet_shop.slug:
-            pet_shop = profile.pet_shop
+        if not pet_shop and request.user.is_authenticated:
+            profile = UserProfile.objects.filter(user=request.user).first()
+
+            if profile and profile.pet_shop and profile.pet_shop.slug:
+                pet_shop = profile.pet_shop
+    except Exception:
+        pet_shop = None
 
     urls = {}
 

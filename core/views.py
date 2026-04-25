@@ -23,42 +23,44 @@ def home_view(request):
 # LOGIN
 # =========================
 def login_view(request):
-
     if request.user.is_authenticated:
         profile = UserProfile.objects.filter(user=request.user).first()
-
         if profile and profile.pet_shop and profile.pet_shop.is_active:
             return redirect('dashboard', slug=profile.pet_shop.slug)
-
         return redirect('config_no_slug')
 
     error = None
 
     if request.method == 'POST':
-        email = request.POST.get('email')
-        password = request.POST.get('password')
+        email = request.POST.get('email', '').strip()
+        password = request.POST.get('password', '')
 
-        user = authenticate(request, username=email, password=password)
-
-        if user:
-            login(request, user)
-
-            profile = UserProfile.objects.filter(user=user).first()
-
-            if not profile or not profile.pet_shop or not profile.pet_shop.is_active:
-                logout(request)
-                error = 'Petshop inválido ou inativo'
-            else:
-                slug = profile.pet_shop.slug
-                next_url = request.GET.get('next')
-
-                if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
-                    return redirect(next_url)
-
-                return redirect('dashboard', slug=slug)
-
+        if not email or not password:
+            error = 'Preencha email e senha'
         else:
-            error = 'Credenciais inválidas'
+            try:
+                from django.core.validators import validate_email
+                from django.core.exceptions import ValidationError
+                validate_email(email)
+            except ValidationError:
+                error = 'Email inválido'
+
+            if not error:
+                user = authenticate(request, username=email, password=password)
+                if user:
+                    login(request, user)
+                    profile = UserProfile.objects.filter(user=user).first()
+                    if not profile or not profile.pet_shop or not profile.pet_shop.is_active:
+                        logout(request)
+                        error = 'Petshop inválido ou inativo'
+                    else:
+                        slug = profile.pet_shop.slug
+                        next_url = request.GET.get('next')
+                        if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
+                            return redirect(next_url)
+                        return redirect('dashboard', slug=slug)
+                else:
+                    error = 'Credenciais inválidas'
 
     return render(request, 'core/login.html', {'error': error})
 

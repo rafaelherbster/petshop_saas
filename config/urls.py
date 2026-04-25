@@ -3,6 +3,9 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
+# Handler para erros 500 em produção
+from django.views.defaults import server_error as handler500
+
 urlpatterns = [
     # 🔓 PÚBLICO (sem slug)
     path('admin/', admin.site.urls),
