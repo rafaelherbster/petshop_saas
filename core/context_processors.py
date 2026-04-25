@@ -29,7 +29,7 @@ def tenant_context(request):
             'appointment_list_url': u('appointment_list'),
             'pet_list_url': u('pet_list'),
             'service_list_url': u('service_list'),  # 👈 ADICIONE ISSO
-            'config_url': u('config'),
+            'config_url': reverse('config', kwargs={'pet_shop_slug': pet_shop.slug}),
         }
     else:
         fallback = reverse('config_no_slug')
